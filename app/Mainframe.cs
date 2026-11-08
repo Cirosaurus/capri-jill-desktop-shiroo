@@ -34,6 +34,9 @@ namespace CapriDesktop
         private readonly Toggle onTop;
         private readonly Entry keyEntry;
         private readonly Key connect;
+        private readonly Entry nineRouterModelEntry;
+        private readonly Entry nineRouterKeyEntry;
+        private readonly Key nineRouterConnect;
         private readonly Entry voiceEntry;
         private readonly ContextMenuStrip voiceMenu;
         private readonly Key speechModels;
@@ -92,7 +95,20 @@ namespace CapriDesktop
             setup.Accent = Look.Cyan;
             setup.Loud = true;
             hint = Caption("Have Ollama? Open it, then press Refresh.", 28, 264, Look.Mono(9f, FontStyle.Italic, GraphicsUnit.Point), Look.Dim);
-            Lower(Caption("VOICE >", 28, 184, Look.Mono(9f, FontStyle.Bold, GraphicsUnit.Point), Look.Yellow));
+            Lower(Caption("9ROUTER >", 28, 184, Look.Mono(9f, FontStyle.Bold, GraphicsUnit.Point), Look.Yellow));
+            nineRouterModelEntry = Lower(Input(28, 206, 244));
+            nineRouterModelEntry.Cue = "Model (e.g. cc/claude-opus-4-6)";
+            nineRouterModelEntry.Box.AccessibleName = "9router model";
+            nineRouterKeyEntry = Lower(Input(28, 236, 244));
+            nineRouterKeyEntry.Cue = "API key from dashboard";
+            nineRouterKeyEntry.Box.UseSystemPasswordChar = true;
+            nineRouterKeyEntry.Box.AccessibleName = "9router API key";
+            nineRouterConnect = Lower(Make("Connect", 280, 221, 76, 28, delegate { ConnectNineRouter(); }));
+            nineRouterModelEntry.Box.TextChanged += delegate { RelabelNineRouter(); };
+            nineRouterKeyEntry.Box.TextChanged += delegate { RelabelNineRouter(); };
+            nineRouterModelEntry.Box.KeyDown += delegate(object sender, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; ConnectNineRouter(); } };
+            nineRouterKeyEntry.Box.KeyDown += delegate(object sender, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; ConnectNineRouter(); } };
+            Lower(Caption("VOICE >", 28, 184 + 70, Look.Mono(9f, FontStyle.Bold, GraphicsUnit.Point), Look.Yellow));
             keyHelp = Lower(Make("Get a key", 256, 180, 100, 22, delegate { capri.OpenKeyPage(); }));
             shortcut = Caption("Ctrl + Alt + V to talk", 156, 182, Look.Mono(8.5f, FontStyle.Regular, GraphicsUnit.Point), Look.Dim);
             shortcut.AutoSize = false;
@@ -319,6 +335,21 @@ namespace CapriDesktop
             Arrange(false);
         }
 
+        internal void ShowNineRouter(string model)
+        {
+            brainName.Text = "9router · " + model;
+            brainNote.Text = "Running via local gateway";
+            models.Visible = false;
+            hint.Visible = false;
+            nineRouterModelEntry.Box.Text = model;
+            nineRouterKeyEntry.Box.Text = "";
+            nineRouterConnect.Text = "Forget";
+            nineRouterConnect.Accent = Look.Red;
+            nineRouterConnect.Enabled = true;
+            nineRouterConnect.Invalidate();
+            Arrange(false);
+        }
+
         internal void ShowSetup(Machine machine, Pick pick, bool viaOllama, string problem)
         {
             brainName.Text = problem == null ? "No brain yet" : "Setup stopped";
@@ -432,6 +463,35 @@ namespace CapriDesktop
             connect.Text = forget ? "Forget" : "Connect";
             connect.Accent = forget ? Look.Red : Look.Ink;
             connect.Invalidate();
+        }
+
+        private void ConnectNineRouter()
+        {
+            string model = nineRouterModelEntry.Box.Text.Trim();
+            string key = nineRouterKeyEntry.Box.Text.Trim();
+            if (model.Length > 0 && key.Length > 0)
+            {
+                nineRouterModelEntry.Box.Text = "";
+                nineRouterKeyEntry.Box.Text = "";
+                capri.ConnectNineRouter(model, key);
+            }
+            else if (nineRouterConnect.Text == "Forget")
+            {
+                capri.ForgetNineRouter();
+            }
+            else
+            {
+                if (model.Length == 0) nineRouterModelEntry.Box.Focus();
+                else nineRouterKeyEntry.Box.Focus();
+            }
+        }
+
+        private void RelabelNineRouter()
+        {
+            bool hasModel = nineRouterModelEntry.Box.Text.Trim().Length > 0;
+            bool hasKey = nineRouterKeyEntry.Box.Text.Trim().Length > 0;
+            nineRouterConnect.Enabled = hasModel && hasKey;
+            nineRouterConnect.Invalidate();
         }
 
         private static ToolStripMenuItem Choice(string text, bool chosen, EventHandler click)

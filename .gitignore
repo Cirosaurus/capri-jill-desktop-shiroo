@@ -1,0 +1,13 @@
+# Build output
+bin/
+obj/
+*.binlog
+
+# Build logs & scratch output (contain local machine paths)
+*.log
+std*.txt
+build_out.txt
+build_errors.txt
+
+# Raw design exports
+Untitled design.*

@@ -69,6 +69,8 @@ namespace CapriDesktop
         [DataMember] public string AgentId;
         [DataMember] public int AgentVersion;
         [DataMember] public string Mic;
+        [DataMember] public string NineRouterModel;
+        [DataMember] public string NineRouterKey;
     }
 
     [DataContract]
@@ -92,7 +94,7 @@ namespace CapriDesktop
             Count = count;
             Fps = fps;
             Height = height;
-            Strip = Companion.LoadArt("Capri.Sprite." + name + ".png");
+            Strip = Companion.LoadArt("Capri.Sprite." + name);
             if (Strip == null) throw new FileNotFoundException("Capri's " + name + " animation is missing. Rebuild with assets/sprites.");
         }
     }
@@ -898,7 +900,15 @@ namespace CapriDesktop
             machine = found;
             fit = Engine.Fit(found);
             ollamaRunning = installed != null;
-            if (installed != null && installed.Length > 0)
+            if (!string.IsNullOrEmpty(preferences.NineRouterModel) && !string.IsNullOrEmpty(preferences.NineRouterKey))
+            {
+                brain.Local = null;
+                brain.Model = null;
+                brain.NineRouterModel = preferences.NineRouterModel;
+                brain.NineRouterKey = preferences.NineRouterKey;
+                mainframe.ShowNineRouter(preferences.NineRouterModel);
+            }
+            else if (installed != null && installed.Length > 0)
             {
                 brain.Local = null;
                 brain.Model = Brain.PickModel(installed, preferences.Model, fit);
@@ -979,6 +989,34 @@ namespace CapriDesktop
         {
             key = (key ?? "").Trim();
             if (key.Length > 0) ListVoices(key, true);
+        }
+
+        internal void ConnectNineRouter(string model, string key)
+        {
+            model = (model ?? "").Trim();
+            key = (key ?? "").Trim();
+            if (model.Length == 0 || key.Length == 0) return;
+            brain.Local = null;
+            brain.Model = null;
+            brain.NineRouterModel = model;
+            brain.NineRouterKey = key;
+            preferences.NineRouterModel = model;
+            preferences.NineRouterKey = key;
+            SavePreferences();
+            mainframe.ShowNineRouter(model);
+            Greet();
+        }
+
+        internal void ForgetNineRouter()
+        {
+            brain.Local = null;
+            brain.Model = null;
+            brain.NineRouterModel = null;
+            brain.NineRouterKey = null;
+            preferences.NineRouterModel = null;
+            preferences.NineRouterKey = null;
+            SavePreferences();
+            FindBrain();
         }
 
         internal void ForgetVoice()

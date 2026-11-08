@@ -101,6 +101,7 @@ namespace CapriDesktop
     internal sealed class Brain
     {
         internal static string Ollama = "http://127.0.0.1:11434";
+        internal static string NineRouter = "http://127.0.0.1:20128";
         internal const string Offline = "My brain's offline, choom. Open Capri Mainframe and plug one in.";
         private static readonly string[] Favourites = { "gemma4:e4b", "gemma4:e2b", "qwen3:4b-instruct-2507", "qwen3.5:4b", "qwen3:4b", "llama3.2:3b", "qwen3:1.7b", "llama3.2:1b", "gemma3:1b" };
         private readonly List<ChatMessage> history = new List<ChatMessage>();
@@ -109,6 +110,8 @@ namespace CapriDesktop
         internal volatile string Model;
         internal volatile Engine Local;
         internal volatile Pick LocalPick;
+        internal volatile string NineRouterModel;
+        internal volatile string NineRouterKey;
 
         internal const string Persona =
             "You are Capri, short for Project Capricorn, from Cyberpunk: Edgerunners 2.\n" +
@@ -174,6 +177,11 @@ namespace CapriDesktop
                 CompletionReply reply = Send<CompletionReply>(local.Address + "/v1/chat/completions", new CompletionRequest { Messages = messages.ToArray() }, 180000);
                 raw = reply.Choices != null && reply.Choices.Length > 0 && reply.Choices[0].Message != null ? reply.Choices[0].Message.Content : null;
             }
+            else if (!string.IsNullOrEmpty(NineRouterModel) && !string.IsNullOrEmpty(NineRouterKey))
+            {
+                CompletionReply reply = Send<CompletionReply>(NineRouter + "/v1/chat/completions", new CompletionRequest { Model = NineRouterModel, Messages = messages.ToArray() }, 180000, NineRouterKey);
+                raw = reply.Choices != null && reply.Choices.Length > 0 && reply.Choices[0].Message != null ? reply.Choices[0].Message.Content : null;
+            }
             else
             {
                 ChatReply reply = Send<ChatReply>(Ollama + "/api/chat", new ChatRequest { Model = model, Messages = messages.ToArray(), Think = false, Options = new ChatOptions() }, 180000);
@@ -199,7 +207,10 @@ namespace CapriDesktop
             {
                 Engine local = Local;
                 if (local != null) local.Ensure(LocalPick);
-                else Send<ChatReply>(Ollama + "/api/chat", new ChatRequest { Model = model, Messages = new ChatMessage[0] }, 180000);
+                else if (!string.IsNullOrEmpty(NineRouterModel) && !string.IsNullOrEmpty(NineRouterKey))
+                    Send<CompletionReply>(NineRouter + "/v1/chat/completions", new CompletionRequest { Model = NineRouterModel, Messages = new ChatMessage[0] }, 180000, NineRouterKey);
+                else
+                    Send<ChatReply>(Ollama + "/api/chat", new ChatRequest { Model = model, Messages = new ChatMessage[0] }, 180000);
             }
             catch (WebException) { } catch (BrainException) { } catch (IOException) { } catch (SerializationException) { }
         }
@@ -276,9 +287,18 @@ namespace CapriDesktop
 
         private T Send<T>(string url, object body, int timeout) where T : class
         {
+            return Send<T>(url, body, timeout, null);
+        }
+
+        private T Send<T>(string url, object body, int timeout, string authKey) where T : class
+        {
             HttpWebRequest request = Create(url, timeout);
             request.Method = "POST";
             request.ContentType = "application/json";
+            if (!string.IsNullOrEmpty(authKey))
+            {
+                request.Headers["Authorization"] = "Bearer " + authKey;
+            }
             byte[] payload = Json(body);
             lock (gate) active = request;
             try

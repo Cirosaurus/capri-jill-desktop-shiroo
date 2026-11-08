@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>Capri</AssemblyTitle>
+    <AssemblyDescription>An unofficial, silent desktop companion</AssemblyDescription>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <FileVersion>0.5.0.0</FileVersion>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\assets\chip.ico</ApplicationIcon>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Agent.cs" />
+    <Compile Include="Brain.cs" />
+    <Compile Include="Capri.cs" />
+    <Compile Include="Ears.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="Ledges.cs" />
+    <Compile Include="Mainframe.cs" />
+    <Compile Include="Talk.cs" />
+    <Compile Include="Voice.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\assets\sprites\*.png">
+      <Link>Sprites\%(Filename)%(Extension)</Link>
+      <LogicalName>Capri.Sprite.%(Filename)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\fonts\ShareTechMono-Regular.ttf">
+      <Link>Fonts\ShareTechMono-Regular.ttf</Link>
+      <LogicalName>Capri.Fonts.ShareTechMono-Regular</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\chip.ico">
+      <Link>chip.ico</Link>
+      <LogicalName>Capri.Chip.ico</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\chip.png">
+      <Link>chip.png</Link>
+      <LogicalName>Capri.Chip.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\perch.png">
+      <Link>perch.png</Link>
+      <LogicalName>Capri.perch</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\capri.png">
+      <Link>capri.png</Link>
+      <LogicalName>Capri.capri</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\chip-source.png">
+      <Link>chip-source.png</Link>
+      <LogicalName>Capri.chip-source</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="UIAutomationClient" />
+    <Reference Include="UIAutomationTypes" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Security" />
+  </ItemGroup>
+
+</Project>
